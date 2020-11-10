@@ -22,7 +22,17 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 	e.Scheduler.Start(Overcontext)
 	for i := 0; i < e.WorkerCount; i++ {
 		in := make(chan Request)
-		e.createWorker(in, out)
+		go func() {
+			for {
+				e.Scheduler.WorkerReady(in)
+				request := <-in
+				parseResult, err := work(request)
+				if err != nil {
+					fmt.Printf("错误%v", err)
+				}
+				out <- parseResult
+			}
+		}()
 	}
 	for _, r := range seeds {
 		e.Scheduler.Submit(r)
@@ -38,19 +48,6 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 			e.Scheduler.Submit(request)
 		}
 	}
-}
-func (e *ConcurrentEngine) createWorker(in chan Request, out chan ParseResult) {
-	go func() {
-		for {
-			e.Scheduler.WorkerReady(in)
-			request := <-in
-			parseResult, err := work(request)
-			if err != nil {
-				fmt.Printf("错误%v", err)
-			}
-			out <- parseResult
-		}
-	}()
 }
 
 var requestCount = &sync.Map{}
