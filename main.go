@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"github.com/cihub/seelog"
 	"osscheck/config"
@@ -17,11 +18,15 @@ func init() {
 func main() {
 	flag.Parse()
 	println(config.ROOTURL)
+	overcontext := context.Background()
 	defer func() {
 		seelog.Flush()
 	}()
+
 	e := engine.ConcurrentEngine{
-		Scheduler:   scheduler.QueuedScheduler{},
+		Scheduler: scheduler.QueuedScheduler{
+			OverCtx: overcontext,
+		},
 		WorkerCount: 5,
 	}
 	e.Run(engine.Request{

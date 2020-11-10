@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"github.com/cihub/seelog"
 	"log"
@@ -18,6 +19,7 @@ type ConcurrentEngine struct {
 func (e *ConcurrentEngine) Run(seeds ...Request) {
 	out := make(chan ParseResult, e.WorkerCount)
 	e.Scheduler.Start()
+	_, cancelFunc := context.WithCancel(e.Scheduler.OverCtx)
 	for i := 0; i < e.WorkerCount; i++ {
 		in := make(chan Request)
 		e.createWorker(in, out)
@@ -30,6 +32,7 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 		for _, item := range parseResult.Items {
 			itemCount++
 			log.Printf("get item %v %v", itemCount, item)
+			cancelFunc()
 		}
 		for _, request := range parseResult.Requests {
 			e.Scheduler.Submit(request)

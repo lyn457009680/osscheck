@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
 	"github.com/cihub/seelog"
 	"os"
@@ -9,6 +10,7 @@ import (
 )
 
 type QueuedScheduler struct {
+	OverCtx     context.Context
 	requestChan chan engine.Request
 	workerChan  chan chan engine.Request
 }
@@ -44,6 +46,9 @@ func (s *QueuedScheduler) Start() {
 			case activeWorker <- activeRequest:
 				workerQ = workerQ[1:]
 				requestQ = requestQ[1:]
+			case <-s.OverCtx.Done():
+				seelog.Infof("程序退出")
+				os.Exit(1)
 			default:
 				nowTime := time.Now().Unix()
 				if nowTime-timeContinue > 100 {
