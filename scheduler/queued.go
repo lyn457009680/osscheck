@@ -13,10 +13,6 @@ type QueuedScheduler struct {
 	workerChan  chan chan engine.Request
 }
 
-func (s *QueuedScheduler) WorkerChan() chan engine.Request {
-	return make(chan engine.Request)
-}
-
 func (s *QueuedScheduler) Submit(r engine.Request) {
 	s.requestChan <- r
 }
@@ -25,10 +21,9 @@ func (s *QueuedScheduler) WorkerReady(w chan engine.Request) {
 	s.workerChan <- w
 }
 
-func (s *QueuedScheduler) Run() {
+func (s *QueuedScheduler) Start() {
 	s.workerChan = make(chan chan engine.Request)
 	s.requestChan = make(chan engine.Request)
-
 	go func() {
 		var requestQ []engine.Request
 		var workerQ []chan engine.Request
@@ -41,25 +36,25 @@ func (s *QueuedScheduler) Run() {
 				activeWorker = workerQ[0]
 			}
 			select {
-				case r := <-s.requestChan:
-					requestQ = append(requestQ, r)
-					timeContinue = time.Now().Unix()
-				case w := <-s.workerChan:
-					workerQ = append(workerQ, w)
-				case activeWorker <- activeRequest:
-					workerQ = workerQ[1:]
-					requestQ = requestQ[1:]
-				default:
-					nowTime := time.Now().Unix()
-					if  nowTime - timeContinue > 100{
-							fmt.Println("sssssssssssssssssssssssss")
-							fmt.Println("ttttttttttttttttt")
-							time.AfterFunc(time.Second*60, func() {
-								seelog.Infof("程序退出")
-								os.Exit(1)
-							})
-						}
-					}
+			case r := <-s.requestChan:
+				requestQ = append(requestQ, r)
+				timeContinue = time.Now().Unix()
+			case w := <-s.workerChan:
+				workerQ = append(workerQ, w)
+			case activeWorker <- activeRequest:
+				workerQ = workerQ[1:]
+				requestQ = requestQ[1:]
+			default:
+				nowTime := time.Now().Unix()
+				if nowTime-timeContinue > 100 {
+					fmt.Println("sssssssssssssssssssssssss")
+					fmt.Println("ttttttttttttttttt")
+					time.AfterFunc(time.Second*60, func() {
+						seelog.Infof("程序退出")
+						os.Exit(1)
+					})
+				}
 			}
+		}
 	}()
 }
