@@ -10,7 +10,6 @@ import (
 )
 
 type QueuedScheduler struct {
-	OverCtx     context.Context
 	requestChan chan engine.Request
 	workerChan  chan chan engine.Request
 }
@@ -23,7 +22,7 @@ func (s *QueuedScheduler) WorkerReady(w chan engine.Request) {
 	s.workerChan <- w
 }
 
-func (s *QueuedScheduler) Start() {
+func (s *QueuedScheduler) Start(OverCtx context.Context) {
 	s.workerChan = make(chan chan engine.Request)
 	s.requestChan = make(chan engine.Request)
 	go func() {
@@ -46,7 +45,7 @@ func (s *QueuedScheduler) Start() {
 			case activeWorker <- activeRequest:
 				workerQ = workerQ[1:]
 				requestQ = requestQ[1:]
-			case <-s.OverCtx.Done():
+			case <-OverCtx.Done():
 				seelog.Infof("程序退出")
 				os.Exit(1)
 			default:

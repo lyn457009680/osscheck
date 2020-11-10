@@ -18,8 +18,8 @@ type ConcurrentEngine struct {
 
 func (e *ConcurrentEngine) Run(seeds ...Request) {
 	out := make(chan ParseResult, e.WorkerCount)
-	e.Scheduler.Start()
-	_, cancelFunc := context.WithCancel(e.Scheduler.OverCtx)
+	Overcontext, cancelFunc := context.WithCancel(context.Background())
+	e.Scheduler.Start(Overcontext)
 	for i := 0; i < e.WorkerCount; i++ {
 		in := make(chan Request)
 		e.createWorker(in, out)

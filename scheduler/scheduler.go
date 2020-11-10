@@ -1,9 +1,12 @@
 package scheduler
 
-import "osscheck/engine"
+import (
+	"context"
+	"osscheck/engine"
+)
 
 type Scheduler interface {
 	Submit(engine.Request)
 	WorkerReady(chan engine.Request)
-	Start()
+	Start(context.Context)
 }
