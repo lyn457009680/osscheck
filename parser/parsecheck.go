@@ -11,7 +11,7 @@ import (
 
 const IMGJSRe = `src=["|'](.*?)["|']` //图片 或者 js
 
-const CSSRe = `href=["|'](.*?)["|']`
+const CSSRe = `href=["|'](.*?)["|']` //a 活着css
 
 var LinkMap = &sync.Map{}
 
@@ -27,7 +27,7 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 		if link == "/" {
 			continue //根目录不检索
 		}
-		if v == "MOBILE" && strings.Contains(link, ".css") {
+		if strings.Contains(link, ".css") {
 			seelog.Info("检测到新资源地址" + link)
 			result.Items = append(result.Items, link)
 			continue
@@ -57,10 +57,8 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 			}
 			continue
 		}
-		if v == "MOBILE" && strings.HasSuffix(link, ".js") {
-			seelog.Info("检测到新资源地址" + link)
-			result.Items = append(result.Items, link)
-		}
+		seelog.Info("检测到新资源地址" + link)
+		result.Items = append(result.Items, link)
 	}
 	return result
 }
