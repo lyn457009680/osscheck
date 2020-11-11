@@ -3,47 +3,62 @@ package parser
 import (
 	"github.com/cihub/seelog"
 	"osscheck/config"
-	"osscheck/engine"
+	"osscheck/request"
 	"regexp"
+	"strings"
 	"sync"
 )
-const personRe = `<a href="([^"]*)" title="([^"]*)"><img class="lazyload" data-original="([^"]*)" />`
 
-const linkRe = `<a href="([^\"]*)">\d*</a>`
+const IMGJSRe = `src=["|'](.*?)["|']` //图片 或者 js
+
+const CSSRe = `href=["|'](.*?)["|']`
 
 var LinkMap = &sync.Map{}
 
-func ParseCheck(contents []byte) engine.ParseResult {
-	personReMust := regexp.MustCompile(personRe)
-	actorMatches := personReMust.FindAllSubmatch(contents, -1)
-	linkReMust := regexp.MustCompile(linkRe)
-	linkMatches := linkReMust.FindAllSubmatch(contents,-1)
-	result := engine.ParseResult{}
-	//防止重复爬取
-	for _,links := range  linkMatches {
+func ParseCheck(contents []byte, v string) request.ParseResult {
+	IMGJSReMust := regexp.MustCompile(IMGJSRe)
+	IMGJSMatches := IMGJSReMust.FindAllSubmatch(contents, -1)
+	linkReMust := regexp.MustCompile(CSSRe)
+	linkMatches := linkReMust.FindAllSubmatch(contents, -1)
+	result := request.ParseResult{}
+	//防止重复爬
+	for _, links := range linkMatches {
 		link := string(links[1])
-		_,ok := LinkMap.Load(link)
+		if link == "/" {
+			continue //根目录不检索
+		}
+		if v == "MOBILE" && strings.Contains(link, ".css") {
+			seelog.Info("检测到新资源地址" + link)
+			result.Items = append(result.Items, link)
+			continue
+		}
+		_, ok := LinkMap.Load(link)
 		if !ok {
-			LinkMap.Store(link,true)
-			result.Requests = append(result.Requests, engine.Request{
-				Url:       config.ROOTURL+link,
+			LinkMap.Store(link, true)
+			seelog.Info("检测到新链接地址" + link)
+			result.Requests = append(result.Requests, request.Request{
+				Url:        config.ROOTURL + link,
+				DeviceType: v,
 				ParserFunc: ParseCheck,
 			})
 		}
 	}
-	for _, m := range actorMatches {
+	for _, m := range IMGJSMatches {
 		link := string(m[1])
-			result.Requests = append(result.Requests, engine.Request{
-				Url:       config.ROOTURL+link,
-				ParserFunc:func(c []byte) engine.ParseResult {
-					return ParseCheck(c)
-				},
-			})
-			if string(m[2]) == "" {
-				seelog.Errorf("相关信息为:%v,%v,%v,%v ",m[0],m[1],m[2],m[3])
+		if strings.Contains(link, ".html") {
+			seelog.Info("检测到新链接地址" + link)
+			_, ok := LinkMap.Load(link)
+			if !ok {
+				LinkMap.Store(link, true)
+				result.Requests = append(result.Requests, request.Request{
+					Url:        config.ROOTURL + link,
+					ParserFunc: ParseCheck,
+				})
 			}
-			result.Items = append(result.Items, "actor: "+string(m[2]))
-
+			continue
+		}
+		seelog.Info("检测到新资源地址" + link)
+		result.Items = append(result.Items, link)
 	}
 	return result
 }

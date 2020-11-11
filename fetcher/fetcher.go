@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"osscheck/config"
-	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -20,25 +19,27 @@ import (
 var timeLimiter = time.Tick(time.Duration(config.FETCHER_INTERVAL) * time.Millisecond)
 
 var requestCount int64
-var successCount int64
-var  judgeRe = `is not available because it is categorized as`
-func Fetcher(url string) ([]byte, error) {
+
+func Fetcher(url string, device_type string) ([]byte, error) {
 	atomic.AddInt64(&requestCount, 1)
-	seelog.Tracef("fetcher调用统计: %v",requestCount)
+	seelog.Tracef("fetcher调用统计: %v", requestCount)
 	<-timeLimiter
 	var err error
 	timeout := time.Duration(60 * time.Second)
 	client := &http.Client{
-		Transport: &http.Transport{
-		},
-		Timeout:timeout,
+		Transport: &http.Transport{},
+		Timeout:   timeout,
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	req.Close = true
-	if err  != nil {
-		seelog.Errorf("代理出错:%v",err)
+	if err != nil {
+		seelog.Errorf("请求出错:%v", err)
 	}
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36")
+	if device_type == "PC" {
+		req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36")
+	} else {
+		req.Header.Add("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36")
+	}
 	req.Header.Add("Upgrade-Insecure-Requests", "1")
 	req.Header.Add("Accept-Language", "zh-CN,zh;q=0.9")
 	req.Header.Add("Cache-Control", "max-age=0")
@@ -47,26 +48,13 @@ func Fetcher(url string) ([]byte, error) {
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		if strings.Contains(url,".jpg") && resp.StatusCode == http.StatusNotFound  {
-			seelog.Infof("获取的图片返回404,url为:%v",url)
-			return nil,nil
-		}
 		return nil, fmt.Errorf("wrong status code: %d", resp.StatusCode)
 	}
 	bufioReader := bufio.NewReader(resp.Body)
 	e := determineEncoding(bufioReader)
 	utf8Reader := transform.NewReader(bufioReader, e.NewDecoder())
-	content ,err :=  ioutil.ReadAll(utf8Reader)
-	judgeResponse(content)
-	return content,err
-}
-
-func judgeResponse (contents []byte)  bool {
-	s := string(contents)
-	if strings.Contains(s,judgeRe) {
-		return false;
-	}
-	return true
+	content, err := ioutil.ReadAll(utf8Reader)
+	return content, err
 }
 func determineEncoding(r *bufio.Reader) encoding.Encoding {
 	bytes, err := r.Peek(1024)

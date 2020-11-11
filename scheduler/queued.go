@@ -5,33 +5,33 @@ import (
 	"fmt"
 	"github.com/cihub/seelog"
 	"os"
-	"osscheck/engine"
+	"osscheck/request"
 	"time"
 )
 
 type QueuedScheduler struct {
-	requestChan chan engine.Request
-	workerChan  chan chan engine.Request
+	requestChan chan request.Request
+	workerChan  chan chan request.Request
 }
 
-func (s *QueuedScheduler) Submit(r engine.Request) {
+func (s *QueuedScheduler) Submit(r request.Request) {
 	s.requestChan <- r
 }
 
-func (s *QueuedScheduler) WorkerReady(w chan engine.Request) {
+func (s *QueuedScheduler) WorkerReady(w chan request.Request) {
 	s.workerChan <- w
 }
 
 func (s *QueuedScheduler) Start(OverCtx context.Context) {
-	s.workerChan = make(chan chan engine.Request)
-	s.requestChan = make(chan engine.Request)
+	s.workerChan = make(chan chan request.Request)
+	s.requestChan = make(chan request.Request)
 	go func() {
-		var requestQ []engine.Request
-		var workerQ []chan engine.Request
+		var requestQ []request.Request
+		var workerQ []chan request.Request
 		timeContinue := time.Now().Unix()
 		for {
-			var activeRequest engine.Request
-			var activeWorker chan engine.Request
+			var activeRequest request.Request
+			var activeWorker chan request.Request
 			if len(requestQ) > 0 && len(workerQ) > 0 {
 				activeRequest = requestQ[0]
 				activeWorker = workerQ[0]

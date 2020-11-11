@@ -1,10 +1,12 @@
 package config
 
 //var  ROOT = "E:/gowork/src/spider"
-var  ROOTURL = ""
+var ROOTURL = ""
 
-var CHECKURL=""
+var CHECKURL = ""
 
-var FETCHER_INTERVAL =2
+var FETCHER_INTERVAL = 2
 
-var REQUEST_ERROR_NUMBER=10
+var DEVICETYPE = "ALL"
+
+var REQUEST_ERROR_NUMBER = 10
