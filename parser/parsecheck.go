@@ -57,8 +57,10 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 			}
 			continue
 		}
-		seelog.Info("检测到新资源地址" + link)
-		result.Items = append(result.Items, link)
+		if v == "MOBILE" && strings.HasSuffix(link, ".js") {
+			seelog.Info("检测到新资源地址" + link)
+			result.Items = append(result.Items, link)
+		}
 	}
 	return result
 }

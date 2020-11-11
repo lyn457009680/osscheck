@@ -1,15 +1,9 @@
 package fetcher
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/cihub/seelog"
-	"golang.org/x/net/html/charset"
-	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"osscheck/config"
 	"sync/atomic"
@@ -50,18 +44,6 @@ func Fetcher(url string, device_type string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("wrong status code: %d", resp.StatusCode)
 	}
-	bufioReader := bufio.NewReader(resp.Body)
-	e := determineEncoding(bufioReader)
-	utf8Reader := transform.NewReader(bufioReader, e.NewDecoder())
-	content, err := ioutil.ReadAll(utf8Reader)
+	content, err := ioutil.ReadAll(resp.Body)
 	return content, err
-}
-func determineEncoding(r *bufio.Reader) encoding.Encoding {
-	bytes, err := r.Peek(1024)
-	if err != nil {
-		log.Printf("fetch error : %v", err)
-		return unicode.UTF8
-	}
-	e, _, _ := charset.DetermineEncoding(bytes, "")
-	return e
 }
