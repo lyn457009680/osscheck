@@ -14,7 +14,7 @@ func init() {
 	flag.StringVar(&config.ROOTURL, "r", "http://carservice.com/", "设置网站的域名")
 	flag.StringVar(&config.CHECKURL, "c", "carservice.com", "设置检测OSS or CDN的域名")
 	flag.IntVar(&config.FETCHER_INTERVAL, "t", 2000, "设置检测间隔毫秒")
-	flag.StringVar(&config.DEVICETYPE, "d", "MOBILE", "设置检测设备PC||MOBILE")
+	flag.StringVar(&config.DEVICETYPE, "d", "PC", "设置检测设备PC||MOBILE")
 }
 func main() {
 	flag.Parse()

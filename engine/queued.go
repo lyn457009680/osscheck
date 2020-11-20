@@ -43,7 +43,7 @@ func (e *ConcurrentEngine) Run(seeds []request.Request) {
 			itemCount++
 			seelog.Infof("get item %v %v", itemCount, item)
 			if !strings.Contains(item.(string), config.CHECKURL) {
-				seelog.Infof("资源文件", itemCount, item)
+				seelog.Errorf("资源文件 %s 不包含检测地址 %s", item.(string), config.CHECKURL)
 				if false {
 					cancelFunc()
 				}

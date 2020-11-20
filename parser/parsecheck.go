@@ -27,6 +27,9 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 		if link == "/" {
 			continue //根目录不检索
 		}
+		if strings.Contains(link, "/min/?f=") {
+			continue
+		}
 		if strings.Contains(link, ".css") {
 			seelog.Info("检测到新资源地址" + link)
 			result.Items = append(result.Items, link)
@@ -45,6 +48,9 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 	}
 	for _, m := range IMGJSMatches {
 		link := string(m[1])
+		if strings.Contains(link, "/min/?f=") {
+			continue
+		}
 		if strings.Contains(link, ".html") {
 			seelog.Info("检测到新链接地址" + link)
 			_, ok := LinkMap.Load(link)

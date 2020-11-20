@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 	"github.com/cihub/seelog"
 	"os"
 	"osscheck/request"
@@ -46,17 +45,13 @@ func (s *QueuedScheduler) Start(OverCtx context.Context) {
 				workerQ = workerQ[1:]
 				requestQ = requestQ[1:]
 			case <-OverCtx.Done():
-				seelog.Infof("程序退出")
+				seelog.Errorf("检测到未包含资源文件程序退出")
 				os.Exit(1)
 			default:
 				nowTime := time.Now().Unix()
-				if nowTime-timeContinue > 100 {
-					fmt.Println("sssssssssssssssssssssssss")
-					fmt.Println("ttttttttttttttttt")
-					time.AfterFunc(time.Second*60, func() {
-						seelog.Infof("程序退出")
-						os.Exit(1)
-					})
+				if nowTime-timeContinue > 10 {
+					seelog.Errorf("无请求队列程序退出!!")
+					os.Exit(1)
 				}
 			}
 		}
