@@ -44,9 +44,9 @@ func (e *ConcurrentEngine) Run(seeds []request.Request) {
 			seelog.Infof("get item %v %v", itemCount, item)
 			if !strings.Contains(item.(string), config.CHECKURL) {
 				seelog.Errorf("资源文件 %s 不包含检测地址 %s", item.(string), config.CHECKURL)
-				if false {
-					cancelFunc()
-				}
+				//if false {
+				cancelFunc()
+				//}
 			}
 		}
 		for _, request := range parseResult.Requests {

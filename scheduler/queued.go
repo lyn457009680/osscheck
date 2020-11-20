@@ -46,11 +46,13 @@ func (s *QueuedScheduler) Start(OverCtx context.Context) {
 				requestQ = requestQ[1:]
 			case <-OverCtx.Done():
 				seelog.Errorf("检测到未包含资源文件程序退出")
+				time.Sleep(1 * time.Second)
 				os.Exit(1)
 			default:
 				nowTime := time.Now().Unix()
 				if nowTime-timeContinue > 10 {
 					seelog.Errorf("无请求队列程序退出!!")
+					time.Sleep(1 * time.Second)
 					os.Exit(1)
 				}
 			}
