@@ -15,7 +15,7 @@ const CSSRe = `href=["|'](.*?)["|']` //a 活着css
 
 var LinkMap = &sync.Map{}
 
-func ParseCheck(contents []byte, v string) request.ParseResult {
+func ParseCheck(contents []byte, device_type string) request.ParseResult {
 	IMGJSReMust := regexp.MustCompile(IMGJSRe)
 	IMGJSMatches := IMGJSReMust.FindAllSubmatch(contents, -1)
 	linkReMust := regexp.MustCompile(CSSRe)
@@ -41,7 +41,7 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 			seelog.Info("检测到新链接地址" + link)
 			result.Requests = append(result.Requests, request.Request{
 				Url:        config.ROOTURL + link,
-				DeviceType: v,
+				DeviceType: device_type,
 				ParserFunc: ParseCheck,
 			})
 		}
@@ -58,6 +58,7 @@ func ParseCheck(contents []byte, v string) request.ParseResult {
 				LinkMap.Store(link, true)
 				result.Requests = append(result.Requests, request.Request{
 					Url:        config.ROOTURL + link,
+					DeviceType: device_type,
 					ParserFunc: ParseCheck,
 				})
 			}
